@@ -1,5 +1,5 @@
 from flask import Flask, request, send_file, jsonify
-from pytube import YouTube  # Make sure to install this: pip install pytube
+from pytube import YouTube
 import os
 
 app = Flask(__name__)
@@ -17,9 +17,12 @@ def download():
     if not video_url:
         return jsonify({"error": "Video URL is required"}), 400
 
+    downloaded_file_path = None  # Initialize the variable for cleanup
+
     try:
         # Create a YouTube object
         yt = YouTube(video_url)
+        print(f"Available streams: {yt.streams.filter(progressive=True).all()}")  # Log available streams
 
         # Filter streams based on format and quality
         if format == "mp4":
@@ -43,11 +46,11 @@ def download():
     
     except Exception as e:
         print(f"Error during download: {e}")
-        return jsonify({"error": "Failed to download video"}), 500
+        return jsonify({"error": str(e)}), 500
 
     finally:
-        # Optional: Cleanup the downloaded file after sending (for single-use cases)
-        if os.path.exists(downloaded_file_path):
+        # Cleanup the downloaded file after sending (for single-use cases)
+        if downloaded_file_path and os.path.exists(downloaded_file_path):
             os.remove(downloaded_file_path)
 
 if __name__ == "__main__":
