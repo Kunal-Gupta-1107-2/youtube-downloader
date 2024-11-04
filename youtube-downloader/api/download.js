@@ -2,7 +2,7 @@ const ytdl = require('ytdl-core');
 
 module.exports = async (req, res) => {
   try {
-    const { url, format } = req.query;
+    let { url, format } = req.query;
 
     // Log the URL for debugging
     console.log('Received URL:', url);
@@ -24,9 +24,19 @@ module.exports = async (req, res) => {
 
     // Stream the file in the specified format
     if (format === 'mp4') {
-      ytdl(url, { quality: 'highestvideo' }).pipe(res);
+      ytdl(url, { quality: 'highestvideo' })
+        .on('error', error => {
+          console.error('Error streaming video:', error);
+          res.status(500).json({ error: 'Error streaming video' });
+        })
+        .pipe(res);
     } else if (format === 'mp3') {
-      ytdl(url, { filter: 'audioonly' }).pipe(res);
+      ytdl(url, { filter: 'audioonly' })
+        .on('error', error => {
+          console.error('Error streaming audio:', error);
+          res.status(500).json({ error: 'Error streaming audio' });
+        })
+        .pipe(res);
     } else {
       console.error('Invalid format:', format);
       return res.status(400).json({ error: 'Invalid format' });
